@@ -22,10 +22,21 @@ class ApiService {
     print('🔹 Login response code: ${response.statusCode}');
     print('🔹 Login response body: ${response.body}');
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception(jsonDecode(response.body)['error'] ?? 'Login failed');
+    try {
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        print('✅ Login success. Decoded JSON: $decoded');
+        return decoded;
+      } else {
+        final errMsg = decoded['error'] ?? 'Login failed';
+        throw Exception('❌ Login failed: $errMsg');
+      }
+    } catch (e) {
+      print('⚠️ JSON decode failed. Response was likely HTML.');
+      throw Exception(
+        'Invalid response from server. '
+        'Ensure your baseUrl ($baseUrl) is correct and backend is running.',
+      );
     }
   }
 
@@ -53,7 +64,8 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception(
-        'Failed to fetch assigned locations: ${response.statusCode} -> ${response.body}',
+        'Failed to fetch assigned locations: '
+        '${response.statusCode} -> ${response.body}',
       );
     }
   }
@@ -86,7 +98,8 @@ class ApiService {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception(
-        'Failed to fetch grouped rooms: ${response.statusCode} -> ${response.body}',
+        'Failed to fetch grouped rooms: '
+        '${response.statusCode} -> ${response.body}',
       );
     }
   }
