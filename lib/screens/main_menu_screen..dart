@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'facility_inspection_screen.dart'; // ✅ Add this import
+import 'facility_inspection_screen.dart';
+import 'supervisors_screen.dart'; // ✅ new import
 
 class MainMenuScreen extends StatelessWidget {
   final String token;
@@ -30,7 +31,7 @@ class MainMenuScreen extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: [
-            // ✅ Facility Inspection now goes to FacilityInspectionScreen
+            // ✅ Facility Inspection button
             _buildMenuItem(
               context,
               'Facility Inspection',
@@ -49,7 +50,32 @@ class MainMenuScreen extends StatelessWidget {
               },
             ),
 
-            // 🧩 Keep other menu items as before
+            // 🧩 Supervisors (visible only for Custodial Managers)
+            if (role == 'Custodial Manager')
+              _buildMenuItem(
+                context,
+                'Supervisors',
+                Icons.supervisor_account,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => SupervisorsScreen(
+                            token: token,
+                            userId: userId,
+                            // 👇 Optional fields left null (allowed now)
+                            roomId: null,
+                            roomName: null,
+                            zoneName: null,
+                            locationName: null,
+                          ),
+                    ),
+                  );
+                },
+              ),
+
+            // 🧩 Other menu items
             _buildMenuItem(
               context,
               'Task Compliance',

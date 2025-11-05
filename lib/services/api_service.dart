@@ -103,4 +103,34 @@ class ApiService {
       );
     }
   }
+
+  // --- GET SUPERVISORS UNDER MANAGER ---
+  static Future<List<dynamic>> getSupervisorsForManager(
+    String token,
+    int userId,
+  ) async {
+    final url = Uri.parse('$baseUrl/manager/$userId/supervisors');
+    print('📋 Fetching supervisors for manager: $url');
+    print('📤 Token being sent: $token');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print('🔹 Response code: ${response.statusCode}');
+    print('🔹 Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+        'Failed to load supervisors: '
+        '${response.statusCode} -> ${response.body}',
+      );
+    }
+  }
 }

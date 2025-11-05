@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:spaklean_frontend/services/api_service.dart';
 
+import 'check_point_screen.dart';
+import 'supervisors_screen.dart';
+
 class ZoneRoomsScreen extends StatefulWidget {
   final String token;
   final int userId;
@@ -46,6 +49,88 @@ class _ZoneRoomsScreenState extends State<ZoneRoomsScreen> {
     }
   }
 
+  /// 🧩 NEW FUNCTION: Select supervisor before proceeding to CheckpointScreen
+  void _selectSupervisorAndProceed(
+    String roomId,
+    String roomName,
+    String officeName,
+  ) async {
+    try {
+      final supervisors = await ApiService.getSupervisorsForManager(
+        widget.token,
+        widget.userId,
+      );
+
+      if (supervisors.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No supervisors assigned to you yet.')),
+        );
+        return;
+      }
+
+      String? selectedSupervisorId;
+
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Select Supervisor'),
+            content: DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: 'Supervisor'),
+              items:
+                  supervisors.map<DropdownMenuItem<String>>((s) {
+                    return DropdownMenuItem<String>(
+                      value: s['id'].toString(),
+                      child: Text(s['name']),
+                    );
+                  }).toList(),
+              onChanged: (value) => selectedSupervisorId = value,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  if (selectedSupervisorId != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => CheckpointScreen(
+                              roomId: roomId,
+                              roomName: roomName,
+                              userId: widget.userId.toString(),
+                              zoneName: widget.zoneName,
+                              officeId: officeName,
+                              currentUserId: widget.userId.toString(),
+                              doneOnBehalfUserId: selectedSupervisorId!,
+                            ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a supervisor'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading supervisors: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,19 +171,41 @@ class _ZoneRoomsScreenState extends State<ZoneRoomsScreen> {
                                   ),
                                 ),
                                 children:
-                                    rooms.map((room) {
+                                    rooms.map((r) {
                                       return ListTile(
                                         leading: const Icon(
                                           Icons.meeting_room,
                                           color: Colors.teal,
                                         ),
-                                        title: Text(room['room_name']),
+                                        title: Text(r['room_name']),
                                         subtitle: Text(
-                                          '${room['category']} → ${room['zone']}',
+                                          '${r['category']} → ${r['zone']}',
                                           style: const TextStyle(
                                             color: Colors.grey,
                                           ),
                                         ),
+                                        // 🧭 Tap to select supervisor and start inspection
+                                        // 🚀 When room is tapped → open Supervisors screen
+                                        // 🚀 When room is tapped → open Supervisors screen
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (
+                                                    context,
+                                                  ) => SupervisorsScreen(
+                                                    token: widget.token,
+                                                    userId: widget.userId,
+                                                    roomId:
+                                                        r['room_id'].toString(),
+                                                    roomName: r['room_name'],
+                                                    zoneName: widget.zoneName,
+                                                    locationName: locationName,
+                                                  ),
+                                            ),
+                                          );
+                                        },
                                       );
                                     }).toList(),
                               );
